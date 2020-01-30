@@ -83,6 +83,7 @@ fi
 ## Test 1
 test_ID="01_standard"
 echo "[ $(date -u) ]: Running script on test data '${test_ID}'"
+set +e
 add_tellread_index_to_fastq.py \
   -i "${input_dir}/R1.fastq.gz" \
   -j "${input_dir}/R2.fastq.gz" \
@@ -90,7 +91,18 @@ add_tellread_index_to_fastq.py \
   -o "${output_dir}/${test_ID}_R1_out.fastq" \
   -p "${output_dir}/${test_ID}_R2_out.fastq" \
   > "${output_dir}/${test_ID}.log" 2>&1
-# TODO - print an error message if this fails
+run_status=$?
+set -e
+
+# If something goes wrong, print a log
+if [ "${run_status}" -ne 0 ]; then
+  echo "[ $(date -u) ]: ERROR: 'add_tellread_index_to_fastq.py' failed. Log info is pasted below. Exiting..."
+  printf "\n\n"
+
+  cat "${output_dir}/${test_ID}.log"
+
+  exit 1
+fi
 
 # Generate MD5 hash of output
 cat "${output_dir}/${test_ID}_R1_out.fastq" | md5sum > "${output_dir}/${test_ID}_R1_out.fastq.md5"
