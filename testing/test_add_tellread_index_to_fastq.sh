@@ -112,6 +112,41 @@ cat "${output_dir}/${test_ID}_R2_out.fastq" | md5sum > "${output_dir}/${test_ID}
 check_md5s "${test_ID}_R1_out"
 check_md5s "${test_ID}_R2_out"
 
+## Test 2
+test_ID="02_gzip"
+echo "[ $(date -u) ]: Running script on test data '${test_ID}'"
+set +e
+add_tellread_index_to_fastq.py \
+  -i "${input_dir}/R1.fastq.gz" \
+  -j "${input_dir}/R2.fastq.gz" \
+  -k "${input_dir}/I1.fastq.gz" \
+  -o "${output_dir}/${test_ID}_R1_out.fastq.gz" \
+  -p "${output_dir}/${test_ID}_R2_out.fastq.gz" \
+  > "${output_dir}/${test_ID}.log" 2>&1
+run_status=$?
+set -e
+
+# If something goes wrong, print a log
+if [ "${run_status}" -ne 0 ]; then
+  echo "[ $(date -u) ]: ERROR: 'add_tellread_index_to_fastq.py' failed. Log info is pasted below. Exiting..."
+  printf "\n\n"
+
+  cat "${output_dir}/${test_ID}.log"
+
+  exit 1
+fi
+
+# Unzip outputs
+gunzip "${output_dir}/${test_ID}_R1_out.fastq.gz" "${output_dir}/${test_ID}_R2_out.fastq.gz"
+
+# Generate MD5 hash of output
+cat "${output_dir}/${test_ID}_R1_out.fastq" | md5sum > "${output_dir}/${test_ID}_R1_out.fastq.md5"
+cat "${output_dir}/${test_ID}_R2_out.fastq" | md5sum > "${output_dir}/${test_ID}_R2_out.fastq.md5"
+
+# Compare
+check_md5s "${test_ID}_R1_out"
+check_md5s "${test_ID}_R2_out"
+
 ### Overall status
 if [[ "${FAILED_TESTS}" -eq 0 ]]; then
   echo "[ $(date -u) ]: All tests PASSED. Deleting output folder."

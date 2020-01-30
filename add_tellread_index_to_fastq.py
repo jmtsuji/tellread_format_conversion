@@ -7,17 +7,77 @@ import logging
 import time
 import os
 import sys
+import gzip
 import argparse
 from Bio.SeqIO.QualityIO import FastqGeneralIterator
 
 # GLOBAL VARIABLES
-SCRIPT_VERSION='0.0.2'
+SCRIPT_VERSION='0.1.0'
 DEFAULT_INDEX_TAG='BC:Z'
 
 # Set up the logger
 logging.basicConfig(format="[ %(asctime)s UTC ]: %(levelname)s: %(message)s")
 logging.Formatter.converter = time.gmtime
 logger = logging.getLogger(__name__)
+
+def open_file_handle(filepath, mode, compression='auto'):
+    """
+    Opens an input or output file with optional gzip compression
+
+    :param filepath: path to the file (string)
+    :param mode: set as either 'read' or 'write'. Simplified version of open() and gzip.open().
+    :param compression: 'auto' to determine the compression type based on the file extension
+                        (.gz). Otherwise, provide None or 'gzip' to set manually.
+    :return: input file handle for reading text
+    """
+    # TODO - add .bz2 support
+    if mode == 'read':
+        if compression == 'auto':
+            # Choose how to open the input file based on extension
+            if os.path.splitext(filepath)[1] == '.gz':
+                logger.debug('Read: detected file "' + filepath + '" as gzipped')
+                file_handle = gzip.open(filepath, 'rt')
+            else:
+                logger.debug('Read: detected file "' + filepath + '" as uncompressed')
+                file_handle = open(filepath, 'r')
+        else:
+            # Choose how to open the input file based on user input
+            logger.debug('Read: manual specification of compression by user: "' + compression + '"')
+            if compression == 'gzip':
+                file_handle = gzip.open(filepath, 'rt')
+            elif compression is None:
+                file_handle = open(filepath, 'r')
+            else:
+                logger.error('"compression" must be set to "auto", "gzip", or None. You set "' + \
+                             compression + '". Exiting...')
+                sys.exit(1)
+
+    elif mode == 'write':
+        if compression == 'auto':
+            # Choose how to open the output file based on extension
+            if os.path.splitext(filepath)[1] == '.gz':
+                logger.debug('Write: detected file "' + filepath + '" as gzipped')
+                file_handle = gzip.open(filepath, 'wt')
+            else:
+                logger.debug('Write: detected file "' + filepath + '" as uncompressed')
+                file_handle = open(filepath, 'w')
+        else:
+            # Choose how to open the output file based on user input
+            logger.debug('Write: manual specification of compression by user: "' + compression + '"')
+            if compression == 'gzip':
+                file_handle = gzip.open(filepath, 'wt')
+            elif compression is None:
+                file_handle = open(filepath, 'w')
+            else:
+                logger.error('"compression" must be set to "auto", "gzip", or None. You set "' + \
+                             compression + '". Exiting...')
+                sys.exit(1)
+
+    else:
+        logger.error('"mode" must be either "read" or "write"; you provided "' + mode + '". Exiting...')
+        sys.exit(1)
+
+    return file_handle
 
 
 def main(args):
@@ -59,11 +119,11 @@ def main(args):
 
     # Open the input/output files
     logger.debug('Opening input/output file handles')
-    R1_handle = open(R1_filepath, 'r')
-    R2_handle = open(R2_filepath, 'r')
-    I1_handle = open(I1_filepath, 'r')
-    R1_output_handle = open(R1_output_filepath, 'w')
-    R2_output_handle = open(R2_output_filepath, 'w')
+    R1_handle = open_file_handle(R1_filepath, 'read')
+    R2_handle = open_file_handle(R2_filepath, 'read')
+    I1_handle = open_file_handle(I1_filepath, 'read')
+    R1_output_handle = open_file_handle(R1_output_filepath, 'write')
+    R2_output_handle = open_file_handle(R2_output_filepath, 'write')
 
     logger.debug('Starting loop through FastQ files')
     for R1_record, R2_record, I1_record in zip(FastqGeneralIterator(R1_handle), FastqGeneralIterator(R2_handle),
