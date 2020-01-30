@@ -12,7 +12,7 @@ import argparse
 from Bio.SeqIO.QualityIO import FastqGeneralIterator
 
 # GLOBAL VARIABLES
-SCRIPT_VERSION='0.1.0'
+SCRIPT_VERSION='0.1.1'
 DEFAULT_INDEX_TAG='BC:Z'
 
 # Set up the logger
@@ -20,7 +20,7 @@ logging.basicConfig(format="[ %(asctime)s UTC ]: %(levelname)s: %(message)s")
 logging.Formatter.converter = time.gmtime
 logger = logging.getLogger(__name__)
 
-def open_file_handle(filepath, mode, compression='auto'):
+def open_file_handle(filepath, mode, compression='auto', compresslevel=5):
     """
     Opens an input or output file with optional gzip compression
 
@@ -28,6 +28,7 @@ def open_file_handle(filepath, mode, compression='auto'):
     :param mode: set as either 'read' or 'write'. Simplified version of open() and gzip.open().
     :param compression: 'auto' to determine the compression type based on the file extension
                         (.gz). Otherwise, provide None or 'gzip' to set manually.
+    :param compresslevel: integer from 0-9; 9 is highest compression, 0 is no compression; for writing
     :return: input file handle for reading text
     """
     # TODO - add .bz2 support
@@ -36,17 +37,17 @@ def open_file_handle(filepath, mode, compression='auto'):
             # Choose how to open the input file based on extension
             if os.path.splitext(filepath)[1] == '.gz':
                 logger.debug('Read: detected file "' + filepath + '" as gzipped')
-                file_handle = gzip.open(filepath, 'rt')
+                file_handle = gzip.open(filepath, mode='rt')
             else:
                 logger.debug('Read: detected file "' + filepath + '" as uncompressed')
-                file_handle = open(filepath, 'r')
+                file_handle = open(filepath, mode='r')
         else:
             # Choose how to open the input file based on user input
             logger.debug('Read: manual specification of compression by user: "' + compression + '"')
             if compression == 'gzip':
-                file_handle = gzip.open(filepath, 'rt')
+                file_handle = gzip.open(filepath, mode='rt')
             elif compression is None:
-                file_handle = open(filepath, 'r')
+                file_handle = open(filepath, mode='r')
             else:
                 logger.error('"compression" must be set to "auto", "gzip", or None. You set "' + \
                              compression + '". Exiting...')
@@ -57,17 +58,17 @@ def open_file_handle(filepath, mode, compression='auto'):
             # Choose how to open the output file based on extension
             if os.path.splitext(filepath)[1] == '.gz':
                 logger.debug('Write: detected file "' + filepath + '" as gzipped')
-                file_handle = gzip.open(filepath, 'wt')
+                file_handle = gzip.open(filepath, mode='wt', compresslevel=compresslevel)
             else:
                 logger.debug('Write: detected file "' + filepath + '" as uncompressed')
-                file_handle = open(filepath, 'w')
+                file_handle = open(filepath, mode='w')
         else:
             # Choose how to open the output file based on user input
             logger.debug('Write: manual specification of compression by user: "' + compression + '"')
             if compression == 'gzip':
-                file_handle = gzip.open(filepath, 'wt')
+                file_handle = gzip.open(filepath, mode='wt', compresslevel=compresslevel)
             elif compression is None:
-                file_handle = open(filepath, 'w')
+                file_handle = open(filepath, mode='w')
             else:
                 logger.error('"compression" must be set to "auto", "gzip", or None. You set "' + \
                              compression + '". Exiting...')
@@ -88,6 +89,7 @@ def main(args):
     R1_output_filepath = args.output_R1
     R2_output_filepath = args.output_R2
     index_tag = args.index_tag
+    compresslevel = args.compression_level
     verbose = args.verbose
 
     # Set logger verbosity
@@ -110,6 +112,7 @@ def main(args):
     logger.info('R1 output filepath: ' + R1_output_filepath)
     logger.info('R2 output filepath: ' + R2_output_filepath)
     logger.info('Index tag: ' + index_tag)
+    logger.info('Compression level (if writing gzipped files): ' + str(compresslevel))
     logger.info('Verbose logging: ' + str(verbose))
     logger.info('################')
 
@@ -122,8 +125,8 @@ def main(args):
     R1_handle = open_file_handle(R1_filepath, 'read')
     R2_handle = open_file_handle(R2_filepath, 'read')
     I1_handle = open_file_handle(I1_filepath, 'read')
-    R1_output_handle = open_file_handle(R1_output_filepath, 'write')
-    R2_output_handle = open_file_handle(R2_output_filepath, 'write')
+    R1_output_handle = open_file_handle(R1_output_filepath, 'write', compresslevel=compresslevel)
+    R2_output_handle = open_file_handle(R2_output_filepath, 'write', compresslevel=compresslevel)
 
     logger.debug('Starting loop through FastQ files')
     for R1_record, R2_record, I1_record in zip(FastqGeneralIterator(R1_handle), FastqGeneralIterator(R2_handle),
@@ -189,6 +192,8 @@ if __name__ == '__main__':
                         help='The path to the output Read 2 (R2) FastQ file')
     parser.add_argument('-x', '--index_tag', required=False, default=False,
                         help='The FastQ tag for the index sequences (default: ' + DEFAULT_INDEX_TAG + ')')
+    parser.add_argument('-c', '--compression_level', required=False, default=5,
+                        help='Compression level for output files, if gzipped. Integer from 0-9, where 9 is highest compression and 0 is no compression (default: 5).')
     parser.add_argument('-v', '--verbose', required=False, action='store_true',
                         help='Enable for verbose logging.')
 
