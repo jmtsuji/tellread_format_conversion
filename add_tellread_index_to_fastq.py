@@ -100,6 +100,9 @@ def main(args):
     logger.info('Verbose logging: ' + str(verbose))
     logger.info('################')
 
+    # Time check
+    start_time = time.time()
+
     # Define the generators
     logger.debug("Opening input files")
     R1 = skbio.io.read(R1_filepath, format='fastq', verify=True, variant=fastq_type)
@@ -141,6 +144,10 @@ def main(args):
     logger.debug("Closing output files")
     R1_out.close()
     R2_out.close()
+
+    end_time = time.time()
+    run_time = end_time - start_time
+    logger.info(os.path.basename(sys.argv[0]) + ': finished after ' + str(run_time) + ' seconds.')
 
 
 if __name__ == '__main__':
