@@ -12,7 +12,7 @@ import skbio
 
 # GLOBAL VARIABLES
 SCRIPT_VERSION='0.0.1'
-DEFAULT_INDEX_TAG='BC:X'
+DEFAULT_INDEX_TAG='BC:Z'
 
 # Set up the logger
 logging.basicConfig(format="[ %(asctime)s UTC ]: %(levelname)s: %(message)s")
@@ -59,7 +59,7 @@ def add_index_to_sequence_description(fastq_record, index_sequence, comment_tag=
     if fastq_description == '':
         fastq_record.metadata['description'] = comment_tag + ':' + index_sequence
     else:
-        fastq_record.metadata['description'] = fastq_record.metadata['description'] + ' ' + \
+        fastq_record.metadata['description'] = fastq_description + ' ' + \
                                                comment_tag + ':' + index_sequence
     
     return(fastq_record)
@@ -115,8 +115,9 @@ def main(args):
     logger.debug("Beginning parsing of input files")
     for R1_record,R2_record,I1_record in zip(R1,R2,I1):
         # Check that the index, R1, and R2 sequences have the same ID
-        if R1_record.metadata['id'] != R2_record.metadata['id'] or \
-           R1_record.metadata['id'] != I1_record.metadata['id']:
+        R1_id = R1_record.metadata['id']
+        if R1_id != R2_record.metadata['id'] or \
+                R1_id != I1_record.metadata['id']:
 
             logger.error('FastQ records do not match! Exiting...')
             logger.error('R1: ' + R1_record.metadata['id'])
