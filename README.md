@@ -11,14 +11,14 @@ comment line of the R1 and R2 FastQ files.
 
 #### Dependencies
 - python >= 3
-- scikit-bio >= 0.5.4
+- biopython >= 1.76
 
 #### Installation
 First, add the script to your `PATH`. 
 Then, install all dependencies. If using conda:
 ```bash
-conda create -n add_tellread_index_to_fastq -c anaconda \
-  python=3 scikit-bio=0.5.4
+conda create -n add_tellread_index_to_fastq -c conda-forge \
+  python=3 biopython=1.76
 
 conda activate add_tellread_index_to_fastq
 ```
