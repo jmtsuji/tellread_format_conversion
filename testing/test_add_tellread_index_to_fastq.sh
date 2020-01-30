@@ -85,9 +85,9 @@ test_ID="01_standard"
 echo "[ $(date -u) ]: Running script on test data '${test_ID}'"
 set +e
 add_tellread_index_to_fastq.py \
-  -i "${input_dir}/R1.fastq.gz" \
-  -j "${input_dir}/R2.fastq.gz" \
-  -k "${input_dir}/I1.fastq.gz" \
+  -i "${input_dir}/R1.fastq" \
+  -j "${input_dir}/R2.fastq" \
+  -k "${input_dir}/I1.fastq" \
   -o "${output_dir}/${test_ID}_R1_out.fastq" \
   -p "${output_dir}/${test_ID}_R2_out.fastq" \
   > "${output_dir}/${test_ID}.log" 2>&1
