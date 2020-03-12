@@ -141,7 +141,7 @@ def main(args):
         id_R2 = header_R2.split(' ')[0]
         id_I1 = header_I1.split(' ')[0]
 
-        if id_R1 != id_R1 or id_R1 != id_I1:
+        if id_R1 != id_R2 or id_R1 != id_I1:
             logger.error('FastQ records do not match! Exiting...')
             logger.error('R1: ' + id_R1)
             logger.error('R2: ' + id_R2)
